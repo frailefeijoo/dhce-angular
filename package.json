@@ -5,10 +5,11 @@
     "ng": "ng",
     "start:data-integration": "ng serve data-integration",
     "start:code-development": "ng serve code-development",
-    "build": "npm run build:data-integration && npm run build:code-development",
+    "build": "npm run build:data-integration && npm run build:code-development && npm run modules:manifest",
     "build:data-integration": "ng build data-integration && node scripts/promote-index.mjs modules/data-integration",
     "build:code-development": "ng build code-development && node scripts/promote-index.mjs modules/code-development",
     "build:code-devolpment": "npm run build:code-development",
+    "modules:manifest": "node scripts/generate-modules-manifest.mjs",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },

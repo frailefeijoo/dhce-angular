@@ -18,7 +18,14 @@ if (!fs.existsSync(browserIndexPath)) {
 
 const html = fs.readFileSync(browserIndexPath, 'utf8');
 
-const toBrowserAssetPath = (_match, attr, quote, value) => {
+const toBrowserAssetPath = (match, attr, quote, value, offset, source) => {
+  if (attr === 'href') {
+    const context = source.slice(Math.max(0, offset - 20), offset).toLowerCase();
+    if (context.includes('<base')) {
+      return match;
+    }
+  }
+
   const isExternal = /^(https?:|data:|mailto:|tel:|#|\/\/)/i.test(value);
   const isAlreadyBrowserPath = value.startsWith('browser/') || value.startsWith('./browser/');
   const isAbsolutePath = value.startsWith('/');

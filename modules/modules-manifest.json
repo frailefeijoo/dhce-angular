@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "generatedAt": "2026-02-14T17:25:10.835Z",
+  "modules": [
+    {
+      "name": "code-development",
+      "entry": "code-development/index.html",
+      "browserPath": "code-development/browser",
+      "files": {
+        "js": [
+          "main-YVBPJYIQ.js",
+          "polyfills-5CFQRCPP.js"
+        ],
+        "css": [
+          "styles-5INURTSO.css"
+        ]
+      }
+    },
+    {
+      "name": "data-integration",
+      "entry": "data-integration/index.html",
+      "browserPath": "data-integration/browser",
+      "files": {
+        "js": [
+          "main-7A7ZVHH7.js",
+          "polyfills-5CFQRCPP.js"
+        ],
+        "css": [
+          "styles-5INURTSO.css"
+        ]
+      }
+    }
+  ]
+}
