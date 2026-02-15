@@ -58,6 +58,8 @@ export class ConnectionComponent implements OnInit {
   isPanelExpanded = true;
   structuredConnections: StructuredConnection[] = [];
   activeConnectionName = '';
+  connectionCheckState: 'idle' | 'loading' | 'ok' | 'error' = 'idle';
+  connectionCheckMessage = '';
 
   private businessValidationRequestId = 0;
   private installationPath = '';
@@ -110,6 +112,46 @@ export class ConnectionComponent implements OnInit {
     }
 
     sessionStorage.setItem(this.activeConnectionStorageKey, this.activeConnectionName);
+
+    // Trigger connection test and show state icon next to select
+    void this.testActiveConnection();
+  }
+
+  private async testActiveConnection(): Promise<void> {
+    if (!this.activeConnectionName) {
+      this.connectionCheckState = 'idle';
+      this.connectionCheckMessage = '';
+      return;
+    }
+
+    const selected = this.structuredConnections.find((c) => c.name === this.activeConnectionName);
+    if (!selected) {
+      this.connectionCheckState = 'error';
+      this.connectionCheckMessage = 'Conexión seleccionada no encontrada';
+      return;
+    }
+
+    this.connectionCheckState = 'loading';
+    this.connectionCheckMessage = '';
+
+    try {
+      const result = await this.extensionBridge.testConnection({
+        source: selected.sourceType || 'unknown',
+        raw: selected.raw,
+        filePath: this.connectionFilePath,
+      });
+
+      if (result?.ok) {
+        this.connectionCheckState = 'ok';
+        this.connectionCheckMessage = '';
+      } else {
+        this.connectionCheckState = 'error';
+        this.connectionCheckMessage = result?.error || 'Comprobación fallida';
+      }
+    } catch (err: any) {
+      this.connectionCheckState = 'error';
+      this.connectionCheckMessage = err?.message ? String(err.message) : 'Error durante la comprobación';
+    }
   }
 
   get connectionFileHint(): string {
@@ -161,7 +203,7 @@ export class ConnectionComponent implements OnInit {
         'No es posible validar la ruta del fichero en el sistema cliente porque el bridge no está disponible.';
       return;
     }
-
+    // Only validate existence to consider the file valid and collapse the panel.
     this.isValidatingConnectionFile = true;
     const resolvedPath = await this.resolveExistingConnectionPath(path);
     if (requestId !== this.businessValidationRequestId) {
@@ -179,41 +221,44 @@ export class ConnectionComponent implements OnInit {
 
     this.connectionFilePath = resolvedPath;
 
-    const fileContentResult = await this.extensionBridge.readTextFile(resolvedPath);
-    if (requestId !== this.businessValidationRequestId) {
-      return;
-    }
-
-    if (!fileContentResult.content?.trim()) {
-      this.connectionFileBusinessValid = false;
-      this.connectionFileBusinessError =
-        fileContentResult.error || 'No se pudo recuperar el contenido del fichero de conexiones.';
-      return;
-    }
-
-    const connections = this.parseConnections(fileContentResult.content, selectedSource);
-    if (connections.length === 0) {
-      this.connectionFileBusinessValid = false;
-      this.connectionFileBusinessError =
-        'El fichero de conexiones no contiene conexiones válidas para el origen detectado.';
-      return;
-    }
-
-    this.structuredConnections = connections;
-    sessionStorage.setItem(this.structuredConnectionsStorageKey, JSON.stringify(this.structuredConnections));
-
-    if (
-      this.activeConnectionName &&
-      !this.structuredConnections.some((connection) => connection.name === this.activeConnectionName)
-    ) {
-      this.activeConnectionName = '';
-      sessionStorage.removeItem(this.activeConnectionStorageKey);
-    }
-
-    this.isPanelExpanded = false;
-
+    // Consider file existence as business valid and collapse the panel immediately.
     this.connectionFileBusinessValid = true;
     this.connectionFileBusinessError = '';
+    this.isPanelExpanded = false;
+
+    // Load content asynchronously and populate candidates for the summary select.
+    // If loading/parsing fails, mark business invalid and show the error message.
+    (async () => {
+      try {
+        const fileContentResult = await this.extensionBridge.readTextFile(resolvedPath);
+        if (!fileContentResult.content?.trim()) {
+          this.connectionFileBusinessValid = false;
+          this.connectionFileBusinessError = fileContentResult.error || 'No se pudo recuperar el contenido del fichero de conexiones.';
+          return;
+        }
+
+        const connections = this.parseConnections(fileContentResult.content, selectedSource);
+        if (connections.length === 0) {
+          this.connectionFileBusinessValid = false;
+          this.connectionFileBusinessError = 'El fichero de conexiones no contiene conexiones válidas para el origen detectado.';
+          return;
+        }
+
+        this.structuredConnections = connections;
+        sessionStorage.setItem(this.structuredConnectionsStorageKey, JSON.stringify(this.structuredConnections));
+
+        if (
+          this.activeConnectionName &&
+          !this.structuredConnections.some((connection) => connection.name === this.activeConnectionName)
+        ) {
+          this.activeConnectionName = '';
+          sessionStorage.removeItem(this.activeConnectionStorageKey);
+        }
+      } catch (err: any) {
+        this.connectionFileBusinessValid = false;
+        this.connectionFileBusinessError = err?.message ? String(err.message) : 'Error al leer el fichero de conexiones.';
+      }
+    })();
   }
 
   private async resolveExistingConnectionPath(path: string): Promise<string | null> {

@@ -38,6 +38,7 @@ export class DhceExtensionBridgeService {
   declare pickDirectory: DhceBridgeServiceApi['bridgeMethods']['pickDirectory'];
   declare fileExistsInDirectory: DhceBridgeServiceApi['bridgeMethods']['fileExistsInDirectory'];
   declare getPdiInstalledVersion: DhceBridgeServiceApi['bridgeMethods']['getPdiInstalledVersion'];
+  declare testConnection: DhceBridgeServiceApi['bridgeMethods']['testConnection'];
 
   constructor() {
     this.serviceApi = createDhceBridgeServiceApi({

@@ -16,6 +16,7 @@ import { getPdiInstalledVersionMethod } from '../methods/rpc/get-pdi-installed-v
 import { pathExistsMethod } from '../methods/rpc/path-exists.method';
 import { pickDirectoryMethod } from '../methods/rpc/pick-directory.method';
 import { readTextFileMethod } from '../methods/rpc/read-text-file.method';
+import { dbTestConnectionMethod } from '../methods/rpc/db-test-connection.method';
 import { normalizeSystemPath, VsCodeApi } from '../utils';
 
 export interface DhceBridgeServiceApi {
@@ -128,6 +129,15 @@ export function createDhceBridgeServiceApi(options: {
     });
   };
 
+  const testConnection = (
+    payload: { source: string; raw: string; filePath?: string },
+  ): Promise<{ ok: boolean; error?: string; details?: unknown }> => {
+    return dbTestConnectionMethod(payload, {
+      timeoutMs: options.config.timeoutMs,
+      request,
+    });
+  };
+
   const fileExistsInDirectory = (
     directoryPath: string,
     filePath: string,
@@ -153,6 +163,7 @@ export function createDhceBridgeServiceApi(options: {
     pickDirectory,
     fileExistsInDirectory,
     getPdiInstalledVersion,
+    testConnection,
   };
 
   return {

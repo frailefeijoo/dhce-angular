@@ -6,18 +6,43 @@
 >
   <div expansion-header-actions class="connection-active-select" (click)="$event.stopPropagation()">
     <label for="activeConnectionSelect">Conexión activa</label>
-    <select
-      id="activeConnectionSelect"
-      [disabled]="!canSelectActiveConnection"
-      [value]="activeConnectionName"
-      (click)="$event.stopPropagation()"
-      (change)="onActiveConnectionChange($any($event.target).value)"
-    >
+    <div class="active-select-with-status">
+      <select
+        id="activeConnectionSelect"
+        [disabled]="!canSelectActiveConnection"
+        [value]="activeConnectionName"
+        (click)="$event.stopPropagation()"
+        (change)="onActiveConnectionChange($any($event.target).value)"
+      >
       <option value="">Sin conexión activa</option>
       @for (connection of structuredConnections; track connection.name) {
         <option [value]="connection.name">{{ connection.name }}</option>
       }
-    </select>
+      </select>
+
+      <div class="active-connection-status" aria-live="polite">
+        <dhce-mat-progress-spinner-component
+          *ngIf="connectionCheckState === 'loading'"
+          [diameter]="18"
+          [strokeWidth]="3"
+        ></dhce-mat-progress-spinner-component>
+
+        <dhce-mat-icon-component
+          *ngIf="connectionCheckState === 'ok'"
+          class="status-icon status-icon-ok"
+          icon="check_circle"
+          ariaLabel="Conexión correcta"
+        ></dhce-mat-icon-component>
+
+        <dhce-mat-icon-component
+          *ngIf="connectionCheckState === 'error'"
+          class="status-icon status-icon-error"
+          icon="error"
+          ariaLabel="Conexión inválida"
+          [title]="connectionCheckMessage"
+        ></dhce-mat-icon-component>
+      </div>
+    </div>
   </div>
 
   <p>El origen de conexión se determina automáticamente por la extensión del fichero.</p>

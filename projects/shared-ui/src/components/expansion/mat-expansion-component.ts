@@ -9,6 +9,9 @@ import { MatExpansionModule } from '@angular/material/expansion';
     <mat-accordion class="dhce-mat-expansion-accordion">
       <mat-expansion-panel [expanded]="expanded" (opened)="onOpened()" (closed)="onClosed()">
         <mat-expansion-panel-header>
+          @if (icon) {
+            <span class="dhce-expansion-icon" aria-hidden="true"><span class="{{icon}}"></span></span>
+          }
           <mat-panel-title>{{ title }}</mat-panel-title>
           @if (summary) {
             <mat-panel-description>{{ summary }}</mat-panel-description>
@@ -34,12 +37,19 @@ import { MatExpansionModule } from '@angular/material/expansion';
       gap: 8px;
       margin-left: auto;
     }
+    .dhce-expansion-icon {
+      display: inline-flex;
+      align-items: center;
+      margin-right: 8px;
+      font-size: 18px;
+    }
   `,
 })
 export class MatExpansionComponent {
   @Input() title = '';
   @Input() summary = '';
   @Input() expanded = false;
+  @Input() icon = '';
   @Output() expandedChange = new EventEmitter<boolean>();
 
   onOpened(): void {

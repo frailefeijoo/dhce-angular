@@ -11,4 +11,5 @@ export interface DhceBridgeMethodsApi {
   pickDirectory(): Promise<string | null>;
   fileExistsInDirectory(directoryPath: string, filePath: string): Promise<DhceFileExistsInDirectoryResult>;
   getPdiInstalledVersion(directoryPath: string): Promise<DhcePdiInstalledVersionResult>;
+  testConnection(payload: { source: string; raw: string; filePath?: string }): Promise<{ ok: boolean; error?: string; details?: unknown }>;
 }

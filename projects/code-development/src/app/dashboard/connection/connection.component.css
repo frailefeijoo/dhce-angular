@@ -28,6 +28,32 @@
 }
 
 .connection-file-status {
+
+.connection-active-select {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.active-select-with-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.active-connection-status {
+  display: inline-flex;
+  align-items: center;
+  min-width: 28px;
+}
+
+.status-icon-ok {
+  color: #4caf50;
+}
+
+.status-icon-error {
+  color: #f44336;
+}
   min-width: 24px;
   min-height: 24px;
   display: flex;
