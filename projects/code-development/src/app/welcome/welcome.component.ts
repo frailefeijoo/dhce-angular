@@ -455,10 +455,9 @@ export class WelcomeComponent implements OnInit, OnDestroy {
       };
     }
 
-    const fileLabel = missingFiles.length === 1 ? 'fichero requerido' : 'ficheros requeridos';
     return {
       valid: false,
-      errorMessage: `No se encontraron los ${fileLabel}: ${missingFiles.join(', ')}.`,
+      errorMessage: 'El directorio no se corresponde con una instalación de Spoon valida',
     };
   }
 
