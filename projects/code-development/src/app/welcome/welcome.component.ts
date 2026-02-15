@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { MatCardComponent } from '../../../../shared-ui/src/components/card/mat-card-component';
 import {
   MatStepperComponent,
@@ -10,27 +10,41 @@ import {
   UiInputPickerTraceEvent,
   UiInputValidationTraceEvent,
 } from '../../../../shared-ui/src/components/input/mat-input-component';
+import {
+  MatSelectComponent,
+  UiSelectOption,
+} from '../../../../shared-ui/src/components/select/mat-select-component';
 import { DhceExtensionBridgeService } from '../../../../shared-extension-bridge/src';
 import { DhceLogsService } from '../../../../shared-logs/src';
 
 @Component({
   selector: 'app-welcome',
   standalone: true,
-  imports: [MatCardComponent, MatStepperComponent, MatStepItemComponent, MatInputComponent],
+  imports: [MatCardComponent, MatStepperComponent, MatStepItemComponent, MatInputComponent, MatSelectComponent],
   templateUrl: './welcome.component.html',
   styleUrl: './welcome.component.css',
 })
 export class WelcomeComponent implements OnInit, OnDestroy {
   @Input() accessCount = 1;
   @Output() completed = new EventEmitter<void>();
+  @ViewChild(MatStepperComponent) private welcomeStepper?: MatStepperComponent;
 
-  workspacePath = 'C:/dev/projects/angular/dhce-angular/projects/code-development';
+  workspacePath = '';
+  selectedTool = '';
+  private currentStepIndex = 0;
   workspacePathExists: boolean | null = false;
   workspacePathBusinessError = '';
   private readonly requiredWorkspaceFiles = ['Pan.bat', 'Kitchen.bat'] as const;
+  readonly toolOptions: UiSelectOption[] = [
+    {
+      value: 'pdi-pentahoo-data-integration',
+      label: 'PDI - Pentahoo Data Integration',
+      icon: 'spoon.ico',
+    },
+  ];
   readonly steps = [
-    'Paso 1: Explora el código',
-    'Paso 2: Personaliza tu experiencia',
+    'Paso 1: Selecciona la herramienta',
+    'Paso 2: Directorio de instalación',
     'Paso 3: Comienza a trabajar',
   ];
 
@@ -131,6 +145,7 @@ export class WelcomeComponent implements OnInit, OnDestroy {
   }
 
   onStepChange(event: UiStepperSelectionChangeEvent): void {
+    this.currentStepIndex = event.selectedIndex;
     this.logs.info('welcome', 'stepChanged', {
       selectedIndex: event.selectedIndex,
       selectedLabel: this.steps[event.selectedIndex] ?? null,
@@ -189,6 +204,35 @@ export class WelcomeComponent implements OnInit, OnDestroy {
       workspacePath: this.workspacePath,
       businessValid: this.workspacePathExists,
     });
+  }
+
+  onToolSelectionChange(value: string): void {
+    this.selectedTool = value;
+    this.logs.info('welcome', 'toolSelectionChanged', {
+      selectedTool: this.selectedTool,
+    });
+  }
+
+  onToolSelectionValidChange(valid: boolean): void {
+    this.logs.info('welcome', 'toolSelectionValidChange', {
+      valid,
+      selectedTool: this.selectedTool,
+    });
+
+    if (valid && this.currentStepIndex === 0) {
+      queueMicrotask(() => {
+        if (this.currentStepIndex !== 0) {
+          return;
+        }
+
+        const moved = this.welcomeStepper?.nextFromCurrent() ?? false;
+        this.logs.info('welcome', 'toolSelectionAutoAdvanceAttempt', {
+          moved,
+          selectedTool: this.selectedTool,
+          currentStepIndex: this.currentStepIndex,
+        });
+      });
+    }
   }
 
   onWorkspacePathChange(value: string | number | boolean): void {

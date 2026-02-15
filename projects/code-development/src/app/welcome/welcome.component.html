@@ -4,16 +4,30 @@
 </dhce-mat-card-component>
 
 <dhce-mat-stepper-component
+  #welcomeStepper
   [linear]="true"
   (stepChange)="onStepChange($event)"
   (finish)="markAsCompleted()"
 >
-  <dhce-mat-step-item label="Paso 1: Explora el código">
-    <p>Revisa la estructura del proyecto y los archivos principales.</p>
-    <p>Empieza por la carpeta <strong>projects/code-development</strong>.</p>
+  <dhce-mat-step-item label="Paso 1: Selecciona la herramienta">
+    <p>Selecciona la herramienta para continuar con la configuración inicial.</p>
+    <dhce-mat-select
+      label="Herramienta"
+      hint="Selecciona una herramienta para continuar."
+      [required]="true"
+      [validate]="true"
+      [options]="toolOptions"
+      [default]="selectedTool"
+      (valueChange)="onToolSelectionChange($event)"
+      (validChange)="onToolSelectionValidChange($event)"
+    ></dhce-mat-select>
+  </dhce-mat-step-item>
+
+  <dhce-mat-step-item label="Paso 2: Directorio de instalación">
+    <p>Selecciona el directorio de instalación de la herramienta.</p>
     <dhce-mat-input
       type="directory"
-      label="Ruta base del proyecto"
+      label="Directorio de instalación"
       hint="Debe ser una ruta absoluta del sistema operativo."
       [readonly]="true"
       [pickerResolver]="workspacePickerResolverOrUndefined"
@@ -27,11 +41,6 @@
       (pickerTrace)="onWorkspacePickerTrace($event)"
       (validationTrace)="onWorkspaceUiValidationTrace($event)"
     ></dhce-mat-input>
-  </dhce-mat-step-item>
-
-  <dhce-mat-step-item label="Paso 2: Personaliza tu experiencia">
-    <p>Ajusta la configuración y preferencias para adaptarlo a tus necesidades.</p>
-    <p>Puedes modificar variables, rutas y estilo de componentes.</p>
   </dhce-mat-step-item>
 
   <dhce-mat-step-item label="Paso 3: Comienza a trabajar">

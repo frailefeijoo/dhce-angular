@@ -1,4 +1,4 @@
-﻿import { Component, ContentChildren, EventEmitter, forwardRef, Input, Output, QueryList } from '@angular/core';
+﻿import { Component, ContentChildren, EventEmitter, forwardRef, Input, Output, QueryList, ViewChild } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { MatStepper, MatStepperModule } from '@angular/material/stepper';
 import { StepperSelectionEvent } from '@angular/cdk/stepper';
@@ -80,6 +80,7 @@ export interface UiStepperSelectionChangeEvent {
 })
 export class MatStepperComponent {
   @ContentChildren(MatStepItemComponent) projectedSteps!: QueryList<MatStepItemComponent>;
+  @ViewChild(MatStepper) private materialStepper?: MatStepper;
   private readonly projectedStepInvalidSources = new Map<number, Set<EventTarget>>();
 
   @Input() steps: UiStepperStep[] = [
@@ -116,6 +117,27 @@ export class MatStepperComponent {
   canMoveFromProjectedStep(stepIndex: number): boolean {
     const invalidSources = this.projectedStepInvalidSources.get(stepIndex);
     return !invalidSources || invalidSources.size === 0;
+  }
+
+  nextFromCurrent(): boolean {
+    const stepper = this.materialStepper;
+    if (!stepper) {
+      return false;
+    }
+
+    const currentIndex = stepper.selectedIndex ?? 0;
+    const lastIndex = this.hasProjectedSteps ? this.projectedStepItems.length - 1 : this.steps.length - 1;
+
+    if (currentIndex >= lastIndex) {
+      return false;
+    }
+
+    if (this.hasProjectedSteps && !this.canMoveFromProjectedStep(currentIndex)) {
+      return false;
+    }
+
+    stepper.next();
+    return true;
   }
 
   goToNext(stepper: MatStepper, stepIndex: number): void {
