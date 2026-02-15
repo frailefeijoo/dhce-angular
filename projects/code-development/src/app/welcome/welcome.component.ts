@@ -14,7 +14,7 @@ import {
   MatSelectComponent,
   UiSelectOption,
 } from '../../../../shared-ui/src/components/select/mat-select-component';
-import { DhceExtensionBridgeService } from '../../../../shared-extension-bridge/src';
+import { DhceExtensionBridgeService } from '../../../../shared-extension-bridge/src/dhce-extension-bridge.service';
 import { DhceLogsService } from '../../../../shared-logs/src';
 
 @Component({
@@ -31,15 +31,19 @@ export class WelcomeComponent implements OnInit, OnDestroy {
 
   workspacePath = '';
   selectedTool = '';
+  selectedToolLabel = '';
   private currentStepIndex = 0;
   workspacePathExists: boolean | null = false;
   workspacePathBusinessError = '';
+  workspaceHasPanShell = false;
+  workspaceHasBatShell = false;
+  installedPdiVersion = '';
   private readonly requiredWorkspaceFiles = ['Pan.bat', 'Kitchen.bat'] as const;
   readonly toolOptions: UiSelectOption[] = [
     {
       value: 'pdi-pentahoo-data-integration',
       label: 'PDI - Pentahoo Data Integration',
-      icon: 'spoon.ico',
+      icon: 'browser/spoon.ico',
     },
   ];
   readonly steps = [
@@ -74,6 +78,7 @@ export class WelcomeComponent implements OnInit, OnDestroy {
 
       if (normalizedPickedPath !== this.workspacePath) {
         this.workspacePath = normalizedPickedPath;
+        this.clearInstallationDetails();
         this.clearPendingRetry();
         this.hasScheduledBridgeRetry = false;
         this.bridgeRetryAttempts = 0;
@@ -172,6 +177,7 @@ export class WelcomeComponent implements OnInit, OnDestroy {
       this.normalizePath(event.value) !== this.workspacePath
     ) {
       this.workspacePath = this.normalizePath(event.value);
+      this.clearInstallationDetails();
       this.clearPendingRetry();
       this.hasScheduledBridgeRetry = false;
       this.bridgeRetryAttempts = 0;
@@ -208,8 +214,10 @@ export class WelcomeComponent implements OnInit, OnDestroy {
 
   onToolSelectionChange(value: string): void {
     this.selectedTool = value;
+    this.selectedToolLabel = this.resolveToolLabel(value);
     this.logs.info('welcome', 'toolSelectionChanged', {
       selectedTool: this.selectedTool,
+      selectedToolLabel: this.selectedToolLabel,
     });
   }
 
@@ -247,6 +255,7 @@ export class WelcomeComponent implements OnInit, OnDestroy {
     }
 
     this.workspacePath = nextPath;
+    this.clearInstallationDetails();
 
     this.clearPendingRetry();
     this.hasScheduledBridgeRetry = false;
@@ -259,6 +268,46 @@ export class WelcomeComponent implements OnInit, OnDestroy {
     void this.validateWorkspacePathExists(this.workspacePath, {
       source: 'workspace-path-change',
     });
+  }
+
+  canProceedFromStep(stepIndex: number): boolean {
+    if (stepIndex === 0) {
+      return Boolean(this.selectedTool.trim());
+    }
+
+    if (stepIndex === 1) {
+      return Boolean(this.workspacePath.trim()) && this.workspacePathExists === true;
+    }
+
+    return true;
+  }
+
+  get summaryTool(): string {
+    return this.selectedToolLabel || 'No seleccionada';
+  }
+
+  get summaryInstallationDirectory(): string {
+    return this.workspacePath.trim() || 'No indicado';
+  }
+
+  get summaryShellPan(): string {
+    if (!this.workspaceHasPanShell || !this.workspacePath.trim()) {
+      return 'No disponible';
+    }
+
+    return `${this.workspacePath}/Pan.bat`;
+  }
+
+  get summaryShellBat(): string {
+    if (!this.workspaceHasBatShell || !this.workspacePath.trim()) {
+      return 'No disponible';
+    }
+
+    return `${this.workspacePath}/Kitchen.bat`;
+  }
+
+  get summaryPdiVersion(): string {
+    return this.installedPdiVersion || 'No disponible';
   }
 
   private async validateWorkspacePathExists(
@@ -293,6 +342,7 @@ export class WelcomeComponent implements OnInit, OnDestroy {
     if (!normalizedPath.trim()) {
       this.workspacePathExists = false;
       this.workspacePathBusinessError = 'La ruta es obligatoria.';
+      this.clearInstallationDetails();
       this.logs.warn('welcome', 'workspacePathEmpty');
       this.finishValidationCycle(requestId);
       return;
@@ -301,6 +351,7 @@ export class WelcomeComponent implements OnInit, OnDestroy {
     if (!this.extensionBridge.hasHost()) {
       this.workspacePathExists = null;
       this.workspacePathBusinessError = '';
+      this.clearInstallationDetails();
       this.logs.warn('welcome', 'bridgeUnavailable', {
         requestId,
         hasScheduledBridgeRetry: this.hasScheduledBridgeRetry,
@@ -354,6 +405,9 @@ export class WelcomeComponent implements OnInit, OnDestroy {
       this.workspacePathBusinessError = result.exists
         ? ''
         : result.error || 'La ruta indicada no existe en el sistema operativo cliente.';
+      if (!result.exists) {
+        this.clearInstallationDetails();
+      }
       this.logs.info('welcome', 'workspaceBusinessValidationBridgeResponse', {
         requestId,
         method: 'fs.pathExists',
@@ -383,6 +437,13 @@ export class WelcomeComponent implements OnInit, OnDestroy {
         if (!filesValidation.valid) {
           this.workspacePathExists = false;
           this.workspacePathBusinessError = filesValidation.errorMessage;
+          this.workspaceHasPanShell = filesValidation.hasPanShell;
+          this.workspaceHasBatShell = filesValidation.hasBatShell;
+          this.installedPdiVersion = '';
+        } else {
+          this.workspaceHasPanShell = filesValidation.hasPanShell;
+          this.workspaceHasBatShell = filesValidation.hasBatShell;
+          this.installedPdiVersion = await this.resolveInstalledPdiVersion(normalizedPath, requestId);
         }
       }
     } catch (error) {
@@ -397,6 +458,7 @@ export class WelcomeComponent implements OnInit, OnDestroy {
       this.workspacePathExists = false;
       this.workspacePathBusinessError =
         'Error al validar la ruta en el sistema cliente.';
+      this.clearInstallationDetails();
       this.logs.error('welcome', 'workspaceBusinessValidationBridgeResponse', {
         requestId,
         method: 'fs.pathExists',
@@ -416,7 +478,7 @@ export class WelcomeComponent implements OnInit, OnDestroy {
   private async validateWorkspaceRequiredFiles(
     directoryPath: string,
     requestId: number,
-  ): Promise<{ valid: boolean; errorMessage: string }> {
+  ): Promise<{ valid: boolean; errorMessage: string; hasPanShell: boolean; hasBatShell: boolean }> {
     const [firstFile, secondFile] = this.requiredWorkspaceFiles;
 
     this.logs.info('welcome', 'workspaceRequiredFilesValidationStarted', {
@@ -452,13 +514,34 @@ export class WelcomeComponent implements OnInit, OnDestroy {
       return {
         valid: true,
         errorMessage: '',
+        hasPanShell: firstResult.exists,
+        hasBatShell: secondResult.exists,
       };
     }
 
     return {
       valid: false,
       errorMessage: 'El directorio no se corresponde con una instalación de Spoon valida',
+      hasPanShell: firstResult.exists,
+      hasBatShell: secondResult.exists,
     };
+  }
+
+  private async resolveInstalledPdiVersion(directoryPath: string, requestId: number): Promise<string> {
+    const versionResult = await this.extensionBridge.getPdiInstalledVersion(directoryPath);
+
+    if (requestId !== this.businessValidationRequestId) {
+      return '';
+    }
+
+    this.logs.info('welcome', 'workspaceVersionValidationBridgeResponse', {
+      directoryPath,
+      version: versionResult.version ?? null,
+      source: versionResult.source ?? null,
+      error: versionResult.error ?? null,
+    });
+
+    return typeof versionResult.version === 'string' ? versionResult.version.trim() : '';
   }
 
   private retryBusinessValidation(path: string, requestId: number): void {
@@ -542,5 +625,16 @@ export class WelcomeComponent implements OnInit, OnDestroy {
       clearTimeout(this.pendingRetryTimerId);
       this.pendingRetryTimerId = null;
     }
+  }
+
+  private clearInstallationDetails(): void {
+    this.workspaceHasPanShell = false;
+    this.workspaceHasBatShell = false;
+    this.installedPdiVersion = '';
+  }
+
+  private resolveToolLabel(toolValue: string): string {
+    const selectedOption = this.toolOptions.find((option) => option.value === toolValue);
+    return selectedOption?.label ?? '';
   }
 }

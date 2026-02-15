@@ -3,6 +3,7 @@ import {
   DhceBridgeConfig,
   DhceBridgeInboundMessage,
   DhceFileExistsInDirectoryResult,
+  DhcePdiInstalledVersionResult,
   DhcePickDirectoryResult,
   DhceBridgeRequest,
   DhcePathExistsResult,
@@ -222,6 +223,34 @@ export class DhceExtensionBridgeService {
     } catch (error) {
       return {
         exists: false,
+        error: error instanceof Error ? error.message : 'Unknown host bridge error.',
+      };
+    }
+  }
+
+  async getPdiInstalledVersion(directoryPath: string): Promise<DhcePdiInstalledVersionResult> {
+    if (typeof directoryPath !== 'string' || !directoryPath.trim()) {
+      return {
+        version: undefined,
+        source: 'unknown',
+        error: 'Directory path is invalid. Expected a non-empty string.',
+      };
+    }
+
+    const normalizedDirectoryPath = this.normalizeSystemPath(directoryPath);
+
+    try {
+      return await this.request<DhcePdiInstalledVersionResult, { directoryPath: string }>(
+        'pdi.getInstalledVersion',
+        {
+          directoryPath: normalizedDirectoryPath,
+        },
+        this.config.timeoutMs,
+      );
+    } catch (error) {
+      return {
+        version: undefined,
+        source: 'unknown',
         error: error instanceof Error ? error.message : 'Unknown host bridge error.',
       };
     }

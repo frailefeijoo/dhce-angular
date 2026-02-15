@@ -54,3 +54,9 @@ export interface DhceFileExistsInDirectoryResult {
   exists: boolean;
   error?: string;
 }
+
+export interface DhcePdiInstalledVersionResult {
+  version?: string;
+  source?: 'spoon' | 'pdi' | 'unknown';
+  error?: string;
+}

@@ -102,6 +102,7 @@ export class MatStepperComponent {
   @Input() nextLabel = 'Siguiente';
   @Input() previousLabel = 'Atrás';
   @Input() finishLabel = 'Finalizar configuración';
+  @Input() canProceedFromStep?: (stepIndex: number) => boolean;
 
   @Output() finish = new EventEmitter<void>();
   @Output() stepChange = new EventEmitter<UiStepperSelectionChangeEvent>();
@@ -115,6 +116,10 @@ export class MatStepperComponent {
   }
 
   canMoveFromProjectedStep(stepIndex: number): boolean {
+    if (!this.canProceedFrom(stepIndex)) {
+      return false;
+    }
+
     const invalidSources = this.projectedStepInvalidSources.get(stepIndex);
     return !invalidSources || invalidSources.size === 0;
   }
@@ -211,6 +216,14 @@ export class MatStepperComponent {
     queueMicrotask(() => {
       stepper.selectedIndex = event.previouslySelectedIndex;
     });
+  }
+
+  private canProceedFrom(stepIndex: number): boolean {
+    if (!this.canProceedFromStep) {
+      return true;
+    }
+
+    return this.canProceedFromStep(stepIndex);
   }
 }
 

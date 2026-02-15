@@ -6,6 +6,7 @@
 <dhce-mat-stepper-component
   #welcomeStepper
   [linear]="true"
+  [canProceedFromStep]="canProceedFromStep.bind(this)"
   (stepChange)="onStepChange($event)"
   (finish)="markAsCompleted()"
 >
@@ -44,7 +45,13 @@
   </dhce-mat-step-item>
 
   <dhce-mat-step-item label="Paso 3: Comienza a trabajar">
-    <p>Accede al dashboard y comienza a desarrollar tu proyecto.</p>
-    <p>Usa el botón de finalizar para marcar el onboarding como completo.</p>
+    <p>Resumen de configuración:</p>
+    <ul>
+      <li>Herramienta PDI: {{ summaryTool }}</li>
+      <li>Directorio de instalación: {{ summaryInstallationDirectory }}</li>
+      <li>Shell Pan: {{ summaryShellPan }}</li>
+      <li>Shell Bat: {{ summaryShellBat }}</li>
+      <li>Versión Pentahoo instalada: {{ summaryPdiVersion }}</li>
+    </ul>
   </dhce-mat-step-item>
 </dhce-mat-stepper-component>
