@@ -55,10 +55,26 @@ export class WelcomeComponent implements OnInit, OnDestroy {
 
     const pickedPath = await this.extensionBridge.pickDirectory();
     if (pickedPath) {
+      const normalizedPickedPath = this.normalizePath(pickedPath);
+
+      if (normalizedPickedPath !== this.workspacePath) {
+        this.workspacePath = normalizedPickedPath;
+        this.clearPendingRetry();
+        this.hasScheduledBridgeRetry = false;
+        this.bridgeRetryAttempts = 0;
+
+        this.logs.info('welcome', 'workspacePathSyncedFromBridgeResolver', {
+          workspacePath: this.workspacePath,
+          source: 'resolver',
+        });
+
+        void this.validateWorkspacePathExists(this.workspacePath);
+      }
+
       this.logs.info('welcome', 'workspacePickerResolvedAbsolutePath', {
-        path: pickedPath,
+        path: normalizedPickedPath,
       });
-      return pickedPath;
+      return normalizedPickedPath;
     }
 
     this.logs.info('welcome', 'workspacePickerBridgeResponse', {
