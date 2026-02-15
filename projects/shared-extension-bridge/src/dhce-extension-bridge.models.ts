@@ -6,7 +6,6 @@ import { FsPickDirectoryResult } from './contracts/methods/fs-pick-directory.con
 import { FsReadTextFileResult } from './contracts/methods/fs-read-text-file.contract';
 import { PdiGetInstalledVersionResult } from './contracts/methods/pdi-get-installed-version.contract';
 import { DbTestConnectionResult } from './contracts/methods/db-test-connection.contract';
-import { DbTestConnectionResult } from './contracts/methods/db-test-connection.contract';
 
 export interface DhceBridgeRequest<TPayload = unknown> {
   kind: 'request';
@@ -59,5 +58,4 @@ export type DhceReadTextFileResult = FsReadTextFileResult;
 
 export type DhcePdiInstalledVersionResult = PdiGetInstalledVersionResult;
 
-export type DhceDbTestConnectionResult = DbTestConnectionResult;
 export type DhceDbTestConnectionResult = DbTestConnectionResult;
