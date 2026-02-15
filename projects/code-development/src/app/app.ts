@@ -11,6 +11,7 @@ import { DashboardComponent } from './dashboard/dashboard.component';
 export class App {
   private readonly accessCountKey = 'code-development:access-count';
   private readonly welcomeCompletedKey = 'code-development:welcome-completed';
+  private readonly installationPathStorageKey = 'code-development:installation-path';
   readonly accessCount = signal(1);
   readonly isFirstAccess = signal(true);
 
@@ -18,7 +19,13 @@ export class App {
     const currentCount = this.readAccessCount();
     const nextCount = currentCount + 1;
 
-    this.isFirstAccess.set(!this.readWelcomeCompleted());
+    const canOpenDashboard = this.canOpenDashboard();
+    this.isFirstAccess.set(!canOpenDashboard);
+
+    if (!canOpenDashboard && this.readWelcomeCompleted()) {
+      localStorage.removeItem(this.welcomeCompletedKey);
+    }
+
     this.accessCount.set(nextCount);
     localStorage.setItem(this.accessCountKey, String(nextCount));
   }
@@ -40,5 +47,13 @@ export class App {
 
   private readWelcomeCompleted(): boolean {
     return localStorage.getItem(this.welcomeCompletedKey) === 'true';
+  }
+
+  private hasInstallationPath(): boolean {
+    return Boolean(localStorage.getItem(this.installationPathStorageKey)?.trim());
+  }
+
+  private canOpenDashboard(): boolean {
+    return this.readWelcomeCompleted() && this.hasInstallationPath();
   }
 }
