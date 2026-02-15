@@ -51,6 +51,10 @@ export class DhceExtensionBridgeService {
     return this.vscodeApi !== null;
   }
 
+  getChannel(): string {
+    return this.config.channel;
+  }
+
   async invoke<TResponse = unknown, TPayload = unknown>(
     method: string,
     payload: TPayload,
@@ -73,6 +77,10 @@ export class DhceExtensionBridgeService {
 
     const vscodeApi = this.vscodeApi;
     if (!vscodeApi) {
+      this.debugLog('request:host-unavailable', {
+        method,
+        channel: this.config.channel,
+      });
       throw new Error('VSCode host bridge is not available in this runtime.');
     }
 
@@ -87,6 +95,8 @@ export class DhceExtensionBridgeService {
     this.debugLog('sendRequest', {
       method,
       requestId,
+      channel: this.config.channel,
+      hasHost: true,
     });
 
     return new Promise<TResponse>((resolve, reject) => {
@@ -101,6 +111,7 @@ export class DhceExtensionBridgeService {
           method,
           requestId,
           timeoutMs,
+          channel: this.config.channel,
         });
         pending.reject(new Error(`Host bridge timeout for method ${method}.`));
       }, timeoutMs);
@@ -191,6 +202,7 @@ export class DhceExtensionBridgeService {
       this.debugLog('response:ok', {
         requestId: inbound.requestId,
         method: pending.method,
+        channel: this.config.channel,
       });
       pending.resolve(inbound.result);
       return;
@@ -200,6 +212,7 @@ export class DhceExtensionBridgeService {
       requestId: inbound.requestId,
       method: pending.method,
       error: inbound.error,
+      channel: this.config.channel,
     });
     pending.reject(new Error(inbound.error || 'Unknown host bridge error.'));
   }
@@ -216,6 +229,7 @@ export class DhceExtensionBridgeService {
     if (data.channel !== this.config.channel) {
       this.debugLog('discard:channel', {
         receivedChannel: data.channel,
+        expectedChannel: this.config.channel,
       });
       return null;
     }

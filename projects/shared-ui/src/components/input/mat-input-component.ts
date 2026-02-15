@@ -457,9 +457,7 @@ export class MatInputComponent implements OnChanges {
       type: this.type,
     });
 
-    if (validation.valid) {
-      this.valueChange.emit(validation.value);
-    }
+    this.valueChange.emit(validation.value);
 
     this.validChange.emit(validation.valid);
 

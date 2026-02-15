@@ -40,6 +40,13 @@ export class WelcomeComponent implements OnInit, OnDestroy {
   private pendingRetryTimerId: ReturnType<typeof setTimeout> | null = null;
 
   readonly workspaceBridgePickerResolver = async (picker: 'file' | 'directory'): Promise<string | null> => {
+    this.logs.info('welcome', 'workspacePickerResolverRequest', {
+      method: 'fs.pickDirectory',
+      picker,
+      channel: this.extensionBridge.getChannel(),
+      hasHost: this.extensionBridge.hasHost(),
+    });
+
     if (picker !== 'directory') {
       return null;
     }
@@ -52,7 +59,15 @@ export class WelcomeComponent implements OnInit, OnDestroy {
       return pickedPath;
     }
 
-    this.logs.info('welcome', 'workspacePickerCancelledOrEmpty');
+    this.logs.info('welcome', 'workspacePickerBridgeResponse', {
+      method: 'fs.pickDirectory',
+      channel: this.extensionBridge.getChannel(),
+      hasHost: this.extensionBridge.hasHost(),
+      selected: false,
+    });
+    this.logs.info('welcome', 'workspacePickerCancelledOrEmpty', {
+      method: 'fs.pickDirectory',
+    });
     return null;
   };
 
@@ -192,6 +207,14 @@ export class WelcomeComponent implements OnInit, OnDestroy {
     this.bridgeRetryAttempts = 0;
     this.clearPendingRetry();
 
+    this.logs.info('welcome', 'workspaceBusinessValidationBridgeRequest', {
+      requestId,
+      method: 'fs.pathExists',
+      channel: this.extensionBridge.getChannel(),
+      hasHost: this.extensionBridge.hasHost(),
+      path,
+    });
+
     try {
       const result = await this.extensionBridge.request<{ exists: boolean; error?: string }, { path: string }>(
         'fs.pathExists',
@@ -208,13 +231,21 @@ export class WelcomeComponent implements OnInit, OnDestroy {
       this.workspacePathBusinessError = result.exists
         ? ''
         : result.error || 'La ruta indicada no existe en el sistema operativo cliente.';
+      this.logs.info('welcome', 'workspaceBusinessValidationBridgeResponse', {
+        requestId,
+        method: 'fs.pathExists',
+        channel: this.extensionBridge.getChannel(),
+        ok: true,
+        exists: result.exists,
+        error: result.error ?? null,
+      });
       this.logs.info('welcome', 'workspacePathValidated', {
         requestId,
         workspacePathExists: this.workspacePathExists,
         businessError: this.workspacePathBusinessError,
         path,
       });
-    } catch {
+    } catch (error) {
       if (requestId !== this.businessValidationRequestId) {
         this.logs.info('welcome', 'workspaceBusinessValidationErrorIgnoredOutdated', {
           requestId,
@@ -225,6 +256,13 @@ export class WelcomeComponent implements OnInit, OnDestroy {
       this.workspacePathExists = false;
       this.workspacePathBusinessError =
         'Error al validar la ruta en el sistema cliente.';
+      this.logs.error('welcome', 'workspaceBusinessValidationBridgeResponse', {
+        requestId,
+        method: 'fs.pathExists',
+        channel: this.extensionBridge.getChannel(),
+        ok: false,
+        error: error instanceof Error ? error.message : 'Unknown bridge error',
+      });
       this.logs.error('welcome', 'workspacePathValidationFailed', {
         requestId,
         path,
