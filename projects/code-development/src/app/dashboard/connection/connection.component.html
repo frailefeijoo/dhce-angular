@@ -1,0 +1,40 @@
+<dhce-mat-expansion-component title="Connections" summary="Configuración de conexiones de BBDD">
+  <p>Selecciona el origen de la configuración de conexión de base de datos.</p>
+
+  <dhce-mat-select
+    label="Origen de conexión"
+    hint="Selecciona el tipo de fichero de configuración."
+    [required]="true"
+    [validate]="true"
+    [options]="connectionSourceOptions"
+    [default]="connectionSource"
+    (valueChange)="onConnectionSourceChange($event)"
+    (validChange)="onConnectionSourceValidChange($event)"
+  ></dhce-mat-select>
+
+  <div class="connection-file-row">
+    <div class="connection-file-input">
+      <dhce-mat-input
+        type="file"
+        label="Fichero de conexión"
+        [hint]="connectionFileHint"
+        [required]="true"
+        [validate]="true"
+        [businessValid]="connectionFileBusinessValid"
+        [businessError]="connectionFileBusinessError"
+        [default]="connectionFilePath"
+        (valueChange)="onConnectionFileChange($event)"
+      ></dhce-mat-input>
+    </div>
+
+    <div class="connection-file-status" aria-live="polite">
+      @if (isValidatingConnectionFile) {
+        <dhce-mat-progress-spinner-component [diameter]="20" [strokeWidth]="3"></dhce-mat-progress-spinner-component>
+      } @else if (connectionFileBusinessValid === true) {
+        <dhce-mat-icon-component class="status-icon status-icon-ok" icon="check_circle" ariaLabel="Fichero validado"></dhce-mat-icon-component>
+      } @else if (connectionFileBusinessValid === false && hasConnectionFileValue) {
+        <dhce-mat-icon-component class="status-icon status-icon-error" icon="error" ariaLabel="Fichero inválido"></dhce-mat-icon-component>
+      }
+    </div>
+  </div>
+</dhce-mat-expansion-component>

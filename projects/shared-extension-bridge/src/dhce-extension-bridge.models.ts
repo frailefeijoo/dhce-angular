@@ -1,3 +1,10 @@
+import {
+  FsFileExistsInDirectoryResult,
+} from './contracts/methods/fs-file-exists-in-directory.contract';
+import { FsPathExistsResult } from './contracts/methods/fs-path-exists.contract';
+import { FsPickDirectoryResult } from './contracts/methods/fs-pick-directory.contract';
+import { PdiGetInstalledVersionResult } from './contracts/methods/pdi-get-installed-version.contract';
+
 export interface DhceBridgeRequest<TPayload = unknown> {
   kind: 'request';
   requestId: string;
@@ -39,24 +46,10 @@ export interface DhceBridgeConfig {
   debug?: boolean;
 }
 
-export interface DhcePathExistsResult {
-  exists: boolean;
-  error?: string;
-}
+export type DhcePathExistsResult = FsPathExistsResult;
 
-export interface DhcePickDirectoryResult {
-  path?: string;
-  cancelled?: boolean;
-  error?: string;
-}
+export type DhcePickDirectoryResult = FsPickDirectoryResult;
 
-export interface DhceFileExistsInDirectoryResult {
-  exists: boolean;
-  error?: string;
-}
+export type DhceFileExistsInDirectoryResult = FsFileExistsInDirectoryResult;
 
-export interface DhcePdiInstalledVersionResult {
-  version?: string;
-  source?: 'spoon' | 'pdi' | 'unknown';
-  error?: string;
-}
+export type DhcePdiInstalledVersionResult = PdiGetInstalledVersionResult;
