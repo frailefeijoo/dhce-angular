@@ -34,6 +34,7 @@ export class DhceExtensionBridgeService {
   private readonly config = inject(DHCE_EXTENSION_BRIDGE_CONFIG, {
     optional: true,
   }) ?? DHCE_EXTENSION_BRIDGE_DEFAULT_CONFIG;
+  private readonly pickerTimeoutMs = Math.max(this.config.timeoutMs, 120_000);
 
   private readonly pendingRequests = new Map<string, PendingRequest>();
   private readonly vscodeApi = this.acquireVsCodeApi();
@@ -166,7 +167,7 @@ export class DhceExtensionBridgeService {
       const result = await this.request<DhcePickDirectoryResult, Record<string, never>>(
         'fs.pickDirectory',
         {},
-        this.config.timeoutMs,
+        this.pickerTimeoutMs,
       );
 
       if (result?.cancelled) {
@@ -180,6 +181,7 @@ export class DhceExtensionBridgeService {
       return null;
     } catch (error) {
       this.debugLog('pickDirectory:error', {
+        timeoutMs: this.pickerTimeoutMs,
         error: error instanceof Error ? error.message : 'Unknown host bridge error.',
       });
       return null;
