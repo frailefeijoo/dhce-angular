@@ -1,16 +1,34 @@
-<dhce-mat-expansion-component title="Connections" summary="Configuración de conexiones de BBDD">
-  <p>Selecciona el origen de la configuración de conexión de base de datos.</p>
+<dhce-mat-expansion-component
+  title="Connections"
+  summary="Configuración de conexiones de BBDD"
+  [expanded]="isPanelExpanded"
+  (expandedChange)="onPanelExpandedChange($event)"
+>
+  <div expansion-header-actions class="connection-active-select" (click)="$event.stopPropagation()">
+    <label for="activeConnectionSelect">Conexión activa</label>
+    <select
+      id="activeConnectionSelect"
+      [disabled]="!canSelectActiveConnection"
+      [value]="activeConnectionName"
+      (click)="$event.stopPropagation()"
+      (change)="onActiveConnectionChange($any($event.target).value)"
+    >
+      <option value="">Sin conexión activa</option>
+      @for (connection of structuredConnections; track connection.name) {
+        <option [value]="connection.name">{{ connection.name }}</option>
+      }
+    </select>
+  </div>
 
-  <dhce-mat-select
+  <p>El origen de conexión se determina automáticamente por la extensión del fichero.</p>
+
+  <dhce-mat-input
+    type="string"
     label="Origen de conexión"
-    hint="Selecciona el tipo de fichero de configuración."
-    [required]="true"
-    [validate]="true"
-    [options]="connectionSourceOptions"
-    [default]="connectionSource"
-    (valueChange)="onConnectionSourceChange($event)"
-    (validChange)="onConnectionSourceValidChange($event)"
-  ></dhce-mat-select>
+    hint="Campo autocalculado según extensión del fichero seleccionado."
+    [readonly]="true"
+    [default]="detectedConnectionSourceLabel"
+  ></dhce-mat-input>
 
   <div class="connection-file-row">
     <div class="connection-file-input">

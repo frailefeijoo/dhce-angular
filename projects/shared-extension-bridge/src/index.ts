@@ -8,5 +8,6 @@ export * from './methods/rpc/file-exists-in-directory.method';
 export * from './methods/rpc/get-pdi-installed-version.method';
 export * from './methods/rpc/path-exists.method';
 export * from './methods/rpc/pick-directory.method';
+export * from './methods/rpc/read-text-file.method';
 export * from './service-api';
 export * from './utils';

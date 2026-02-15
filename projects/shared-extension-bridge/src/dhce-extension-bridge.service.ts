@@ -34,6 +34,7 @@ export class DhceExtensionBridgeService {
   declare sendRequest: DhceBridgeServiceApi['sendRequest'];
   declare sendRequestTyped: DhceBridgeServiceApi['sendRequestTyped'];
   declare pathExists: DhceBridgeServiceApi['bridgeMethods']['pathExists'];
+  declare readTextFile: DhceBridgeServiceApi['bridgeMethods']['readTextFile'];
   declare pickDirectory: DhceBridgeServiceApi['bridgeMethods']['pickDirectory'];
   declare fileExistsInDirectory: DhceBridgeServiceApi['bridgeMethods']['fileExistsInDirectory'];
   declare getPdiInstalledVersion: DhceBridgeServiceApi['bridgeMethods']['getPdiInstalledVersion'];

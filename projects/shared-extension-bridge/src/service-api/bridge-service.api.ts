@@ -3,6 +3,7 @@ import {
   DhceFileExistsInDirectoryResult,
   DhcePdiInstalledVersionResult,
   DhcePathExistsResult,
+  DhceReadTextFileResult,
 } from '../dhce-extension-bridge.models';
 import { DhceBridgeMethodsApi } from '../contracts/bridge-methods.contract';
 import {
@@ -14,6 +15,7 @@ import { fileExistsInDirectoryMethod } from '../methods/rpc/file-exists-in-direc
 import { getPdiInstalledVersionMethod } from '../methods/rpc/get-pdi-installed-version.method';
 import { pathExistsMethod } from '../methods/rpc/path-exists.method';
 import { pickDirectoryMethod } from '../methods/rpc/pick-directory.method';
+import { readTextFileMethod } from '../methods/rpc/read-text-file.method';
 import { normalizeSystemPath, VsCodeApi } from '../utils';
 
 export interface DhceBridgeServiceApi {
@@ -118,6 +120,14 @@ export function createDhceBridgeServiceApi(options: {
     });
   };
 
+  const readTextFile = (path: string): Promise<DhceReadTextFileResult> => {
+    return readTextFileMethod(path, {
+      timeoutMs: options.config.timeoutMs,
+      normalizeSystemPath: (value) => normalizeSystemPath(value),
+      request,
+    });
+  };
+
   const fileExistsInDirectory = (
     directoryPath: string,
     filePath: string,
@@ -139,6 +149,7 @@ export function createDhceBridgeServiceApi(options: {
 
   const bridgeMethods: DhceBridgeMethodsApi = {
     pathExists,
+    readTextFile,
     pickDirectory,
     fileExistsInDirectory,
     getPdiInstalledVersion,

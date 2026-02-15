@@ -39,6 +39,7 @@ export class WelcomeComponent implements OnInit, OnDestroy {
   workspaceHasBatShell = false;
   installedPdiVersion = '';
   private readonly requiredWorkspaceFiles = ['Pan.bat', 'Kitchen.bat'] as const;
+  private readonly installationPathStorageKey = 'code-development:installation-path';
   readonly toolOptions: UiSelectOption[] = [
     {
       value: 'pdi-pentahoo-data-integration',
@@ -142,6 +143,10 @@ export class WelcomeComponent implements OnInit, OnDestroy {
   }
 
   markAsCompleted(): void {
+    if (this.workspacePathExists === true && this.workspacePath.trim()) {
+      localStorage.setItem(this.installationPathStorageKey, this.workspacePath);
+    }
+
     this.logs.info('welcome', 'onboardingCompleted', {
       finalWorkspacePath: this.workspacePath,
       workspacePathExists: this.workspacePathExists,

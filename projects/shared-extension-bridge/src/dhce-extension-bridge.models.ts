@@ -3,6 +3,7 @@ import {
 } from './contracts/methods/fs-file-exists-in-directory.contract';
 import { FsPathExistsResult } from './contracts/methods/fs-path-exists.contract';
 import { FsPickDirectoryResult } from './contracts/methods/fs-pick-directory.contract';
+import { FsReadTextFileResult } from './contracts/methods/fs-read-text-file.contract';
 import { PdiGetInstalledVersionResult } from './contracts/methods/pdi-get-installed-version.contract';
 
 export interface DhceBridgeRequest<TPayload = unknown> {
@@ -51,5 +52,7 @@ export type DhcePathExistsResult = FsPathExistsResult;
 export type DhcePickDirectoryResult = FsPickDirectoryResult;
 
 export type DhceFileExistsInDirectoryResult = FsFileExistsInDirectoryResult;
+
+export type DhceReadTextFileResult = FsReadTextFileResult;
 
 export type DhcePdiInstalledVersionResult = PdiGetInstalledVersionResult;
