@@ -60,18 +60,19 @@ export class ConnectionComponent implements OnInit {
   activeConnectionName = '';
 
   private businessValidationRequestId = 0;
+  private installationPath = '';
 
   constructor(private readonly extensionBridge: DhceExtensionBridgeService) {}
 
   ngOnInit(): void {
     this.restoreSessionState();
 
-    const installationPath = this.readInstallationPath();
-    if (!installationPath) {
+    this.installationPath = this.readInstallationPath();
+    if (!this.installationPath) {
       return;
     }
 
-    const normalizedInstallationPath = installationPath.replace(/\\/g, '/').replace(/\/+$/, '');
+    const normalizedInstallationPath = this.installationPath.replace(/\\/g, '/').replace(/\/+$/, '');
     const defaultConnectionPath = `${normalizedInstallationPath}/simple-jndi/jdbc.properties`;
 
     this.connectionFilePath = defaultConnectionPath;
@@ -148,21 +149,23 @@ export class ConnectionComponent implements OnInit {
     }
 
     this.isValidatingConnectionFile = true;
-    const fileExistsResult = await this.extensionBridge.pathExists(path);
+    const resolvedPath = await this.resolveExistingConnectionPath(path);
     if (requestId !== this.businessValidationRequestId) {
       return;
     }
 
     this.isValidatingConnectionFile = false;
 
-    if (!fileExistsResult.exists) {
+    if (!resolvedPath) {
       this.connectionFileBusinessValid = false;
       this.connectionFileBusinessError =
-        fileExistsResult.error || 'La ruta del fichero indicada no existe en el sistema operativo cliente.';
+        'La ruta del fichero indicada no existe en el sistema operativo cliente.';
       return;
     }
 
-    const fileContentResult = await this.extensionBridge.readTextFile(path);
+    this.connectionFilePath = resolvedPath;
+
+    const fileContentResult = await this.extensionBridge.readTextFile(resolvedPath);
     if (requestId !== this.businessValidationRequestId) {
       return;
     }
@@ -197,6 +200,43 @@ export class ConnectionComponent implements OnInit {
 
     this.connectionFileBusinessValid = true;
     this.connectionFileBusinessError = '';
+  }
+
+  private async resolveExistingConnectionPath(path: string): Promise<string | null> {
+    const candidates = this.buildConnectionPathCandidates(path);
+
+    for (const candidate of candidates) {
+      const fileExistsResult = await this.extensionBridge.pathExists(candidate);
+      if (fileExistsResult.exists) {
+        return candidate;
+      }
+    }
+
+    return null;
+  }
+
+  private buildConnectionPathCandidates(path: string): string[] {
+    const normalizedPath = path.replace(/\\/g, '/').trim();
+    if (!normalizedPath) {
+      return [];
+    }
+
+    const candidates = new Set<string>([normalizedPath]);
+    const normalizedInstallationPath = this.installationPath.replace(/\\/g, '/').replace(/\/+$/, '');
+
+    if (!this.isAbsolutePath(normalizedPath) && normalizedInstallationPath) {
+      candidates.add(`${normalizedInstallationPath}/${normalizedPath}`);
+      candidates.add(`${normalizedInstallationPath}/simple-jndi/${normalizedPath}`);
+    }
+
+    return Array.from(candidates);
+  }
+
+  private isAbsolutePath(path: string): boolean {
+    const windowsAbsolute = /^[a-zA-Z]:\//;
+    const unixAbsolute = /^\//;
+    const uncAbsolute = /^\/\//;
+    return windowsAbsolute.test(path) || unixAbsolute.test(path) || uncAbsolute.test(path);
   }
 
   private detectConnectionSource(path: string): ConnectionSourceConfig | null {
