@@ -64,6 +64,20 @@ export class ConnectionComponent implements OnInit {
 
   constructor(private readonly extensionBridge: DhceExtensionBridgeService) {}
 
+  readonly connectionPickerResolver = async (picker: 'file' | 'directory'): Promise<string | null> => {
+    if (picker !== 'directory') {
+      return null;
+    }
+
+    const picked = await this.extensionBridge.pickDirectory();
+    if (!picked) {
+      return null;
+    }
+
+    const normalized = picked.replace(/\\/g, '/').replace(/\/+$/, '');
+    return `${normalized}/simple-jndi/jdbc.properties`;
+  };
+
   ngOnInit(): void {
     this.restoreSessionState();
 
