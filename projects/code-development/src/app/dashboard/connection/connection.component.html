@@ -21,40 +21,16 @@
       </select>
 
       <div class="active-connection-status" aria-live="polite">
-        <dhce-mat-progress-spinner-component
-          *ngIf="connectionCheckState === 'loading'"
-          [diameter]="18"
-          [strokeWidth]="3"
-        ></dhce-mat-progress-spinner-component>
+        <dhce-mat-progress-spinner-component *ngIf="connectionCheckState === 'loading'" [diameter]="18" [strokeWidth]="3"></dhce-mat-progress-spinner-component>
 
-        <dhce-mat-icon-component
-          *ngIf="connectionCheckState === 'ok'"
-          class="status-icon status-icon-ok"
-          icon="check_circle"
-          ariaLabel="Conexión correcta"
-        ></dhce-mat-icon-component>
+        <span *ngIf="connectionCheckState === 'ok'" class="codicon codicon-check status-icon status-icon-ok" aria-hidden="true"></span>
 
-        <dhce-mat-icon-component
-          *ngIf="connectionCheckState === 'error'"
-          class="status-icon status-icon-error"
-          icon="error"
-          ariaLabel="Conexión inválida"
-          [title]="connectionCheckMessage"
-        ></dhce-mat-icon-component>
+        <span *ngIf="connectionCheckState === 'error'" class="codicon codicon-error status-icon status-icon-error" aria-hidden="true" [title]="connectionCheckMessage"></span>
       </div>
     </div>
   </div>
 
   <p>El origen de conexión se determina automáticamente por la extensión del fichero.</p>
-
-  <dhce-mat-input
-    type="string"
-    label="Origen de conexión"
-    hint="Campo autocalculado según extensión del fichero seleccionado."
-    [readonly]="true"
-    [default]="detectedConnectionSourceLabel"
-  ></dhce-mat-input>
-
   <div class="connection-file-row">
     <div class="connection-file-input">
       <dhce-mat-input
@@ -75,10 +51,19 @@
       @if (isValidatingConnectionFile) {
         <dhce-mat-progress-spinner-component [diameter]="20" [strokeWidth]="3"></dhce-mat-progress-spinner-component>
       } @else if (connectionFileBusinessValid === true) {
-        <dhce-mat-icon-component class="status-icon status-icon-ok" icon="check_circle" ariaLabel="Fichero validado"></dhce-mat-icon-component>
+        <span class="codicon codicon-check status-icon status-icon-ok" aria-hidden="true"></span>
       } @else if (connectionFileBusinessValid === false && hasConnectionFileValue) {
-        <dhce-mat-icon-component class="status-icon status-icon-error" icon="error" ariaLabel="Fichero inválido"></dhce-mat-icon-component>
+        <span class="codicon codicon-error status-icon status-icon-error" aria-hidden="true"></span>
       }
     </div>
   </div>
+
+  <dhce-mat-input
+    type="string"
+    label="Origen de conexión"
+    hint="Campo autocalculado según extensión del fichero seleccionado."
+    [readonly]="true"
+    tabindex="-1"
+    [default]="detectedConnectionSourceLabel"
+  ></dhce-mat-input>
 </dhce-mat-expansion-component>

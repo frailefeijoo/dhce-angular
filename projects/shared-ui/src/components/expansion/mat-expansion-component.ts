@@ -10,7 +10,7 @@ import { MatExpansionModule } from '@angular/material/expansion';
       <mat-expansion-panel [expanded]="expanded" (opened)="onOpened()" (closed)="onClosed()">
         <mat-expansion-panel-header>
           @if (icon) {
-            <span class="dhce-expansion-icon" aria-hidden="true"><span class="{{icon}}"></span></span>
+            <span class="dhce-expansion-icon" aria-hidden="true"><span class="codicon {{icon}}"></span></span>
           }
           <mat-panel-title>{{ title }}</mat-panel-title>
           @if (summary) {

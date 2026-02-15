@@ -39,6 +39,36 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
+
+.active-select-with-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.active-connection-status {
+  display: inline-flex;
+  align-items: center;
+  min-width: 28px;
+}
+
+.status-icon-ok {
+  color: #22c55e; /* green */
+}
+
+.status-icon-error {
+  color: #ef4444; /* red */
+}
+
+.codicon {
+  font-size: 18px;
+  line-height: 18px;
+}
+
+/* Hide default material expansion chevron to use custom codicon */
+.mat-expansion-indicator {
+  display: none !important;
+}
 }
 
 .active-connection-status {
