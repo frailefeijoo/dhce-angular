@@ -124,6 +124,26 @@ export class WelcomeComponent implements OnInit, OnDestroy {
       value: event.value ?? null,
       filesCount: event.filesCount ?? null,
     });
+
+    if (
+      event.phase === 'selected' &&
+      event.mode === 'directory' &&
+      typeof event.value === 'string' &&
+      event.value.trim() &&
+      event.value !== this.workspacePath
+    ) {
+      this.workspacePath = event.value;
+      this.clearPendingRetry();
+      this.hasScheduledBridgeRetry = false;
+      this.bridgeRetryAttempts = 0;
+
+      this.logs.info('welcome', 'workspacePathSyncedFromPickerTrace', {
+        workspacePath: this.workspacePath,
+        source: event.source,
+      });
+
+      void this.validateWorkspacePathExists(this.workspacePath);
+    }
   }
 
   onWorkspaceUiValidationTrace(event: UiInputValidationTraceEvent): void {
@@ -148,13 +168,18 @@ export class WelcomeComponent implements OnInit, OnDestroy {
     const nextPath = `${value}`;
     const changed = nextPath !== this.workspacePath;
 
+    if (!changed) {
+      this.logs.info('welcome', 'workspacePathChangeIgnoredNoop', {
+        workspacePath: this.workspacePath,
+      });
+      return;
+    }
+
     this.workspacePath = nextPath;
 
-    if (changed) {
-      this.clearPendingRetry();
-      this.hasScheduledBridgeRetry = false;
-      this.bridgeRetryAttempts = 0;
-    }
+    this.clearPendingRetry();
+    this.hasScheduledBridgeRetry = false;
+    this.bridgeRetryAttempts = 0;
 
     this.logs.info('welcome', 'workspacePathChanged', {
       workspacePath: this.workspacePath,
