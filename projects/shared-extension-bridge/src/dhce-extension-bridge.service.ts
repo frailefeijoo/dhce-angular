@@ -145,10 +145,12 @@ export class DhceExtensionBridgeService {
       };
     }
 
+    const normalizedPath = this.normalizeSystemPath(path);
+
     try {
       return await this.request<DhcePathExistsResult, { path: string }>(
         'fs.pathExists',
-        { path },
+        { path: normalizedPath },
         this.config.timeoutMs,
       );
     } catch (error) {
@@ -172,7 +174,7 @@ export class DhceExtensionBridgeService {
       }
 
       if (typeof result?.path === 'string' && result.path.trim()) {
-        return result.path;
+        return this.normalizeSystemPath(result.path);
       }
 
       return null;
@@ -259,6 +261,32 @@ export class DhceExtensionBridgeService {
 
   private generateRequestId(): string {
     return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  }
+
+  private normalizeSystemPath(rawPath: string): string {
+    const trimmed = rawPath.trim();
+    if (!trimmed) {
+      return '';
+    }
+
+    let normalized = trimmed.replace(/\\/g, '/');
+
+    if (/^[a-zA-Z]:$/.test(normalized)) {
+      return `${normalized}/`;
+    }
+
+    if (normalized.startsWith('//')) {
+      const body = normalized.slice(2).replace(/\/{2,}/g, '/');
+      normalized = `//${body}`;
+    } else {
+      normalized = normalized.replace(/\/{2,}/g, '/');
+    }
+
+    if (!/^[a-zA-Z]:\/$/.test(normalized)) {
+      normalized = normalized.replace(/\/+$/, '');
+    }
+
+    return normalized;
   }
 
   private isEnvelope(data: unknown): data is { channel: string; message: unknown } {

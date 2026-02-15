@@ -66,12 +66,17 @@ export class WelcomeComponent implements OnInit, OnDestroy {
         this.logs.info('welcome', 'workspacePathSyncedFromBridgeResolver', {
           workspacePath: this.workspacePath,
           source: 'resolver',
+          rawPath: pickedPath,
         });
-
-        void this.validateWorkspacePathExists(this.workspacePath);
       }
 
+      void this.validateWorkspacePathExists(pickedPath, {
+        source: 'picker-resolver',
+        force: true,
+      });
+
       this.logs.info('welcome', 'workspacePickerResolvedAbsolutePath', {
+        rawPath: pickedPath,
         path: normalizedPickedPath,
       });
       return normalizedPickedPath;
@@ -160,7 +165,10 @@ export class WelcomeComponent implements OnInit, OnDestroy {
         source: event.source,
       });
 
-      void this.validateWorkspacePathExists(this.workspacePath);
+      void this.validateWorkspacePathExists(event.value, {
+        source: `picker-trace:${event.source}`,
+        force: true,
+      });
     }
   }
 
@@ -203,10 +211,15 @@ export class WelcomeComponent implements OnInit, OnDestroy {
       workspacePath: this.workspacePath,
       changed,
     });
-    void this.validateWorkspacePathExists(this.workspacePath);
+    void this.validateWorkspacePathExists(this.workspacePath, {
+      source: 'workspace-path-change',
+    });
   }
 
-  private async validateWorkspacePathExists(path: string): Promise<void> {
+  private async validateWorkspacePathExists(
+    path: string,
+    options?: { source?: string; force?: boolean },
+  ): Promise<void> {
     const normalizedPath = this.normalizePath(path);
 
     if (normalizedPath !== this.workspacePath) {
@@ -217,6 +230,8 @@ export class WelcomeComponent implements OnInit, OnDestroy {
       this.queuedValidationPath = normalizedPath;
       this.logs.info('welcome', 'workspaceBusinessValidationQueued', {
         path: normalizedPath,
+        source: options?.source ?? 'unknown',
+        force: options?.force ?? false,
       });
       return;
     }
@@ -226,6 +241,8 @@ export class WelcomeComponent implements OnInit, OnDestroy {
     this.logs.info('welcome', 'workspaceBusinessValidationStarted', {
       requestId,
       path: normalizedPath,
+      source: options?.source ?? 'unknown',
+      force: options?.force ?? false,
     });
 
     if (!normalizedPath.trim()) {
@@ -374,19 +391,13 @@ export class WelcomeComponent implements OnInit, OnDestroy {
     const queuedPath = this.queuedValidationPath;
     this.queuedValidationPath = null;
 
-    if (queuedPath && queuedPath !== this.workspacePath) {
-      this.logs.info('welcome', 'workspaceBusinessValidationQueueDropped', {
-        queuedPath,
-        currentPath: this.workspacePath,
-      });
-      return;
-    }
-
     if (queuedPath) {
       this.logs.info('welcome', 'workspaceBusinessValidationQueueFlushed', {
         queuedPath,
       });
-      void this.validateWorkspacePathExists(queuedPath);
+      void this.validateWorkspacePathExists(queuedPath, {
+        source: 'queued-validation',
+      });
     }
   }
 
