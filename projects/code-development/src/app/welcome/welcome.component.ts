@@ -25,7 +25,7 @@ export class WelcomeComponent implements OnInit, OnDestroy {
   @Output() completed = new EventEmitter<void>();
 
   workspacePath = 'C:/dev/projects/angular/dhce-angular/projects/code-development';
-  workspacePathExists = false;
+  workspacePathExists: boolean | null = false;
   workspacePathBusinessError = '';
   readonly steps = [
     'Paso 1: Explora el código',
@@ -34,6 +34,8 @@ export class WelcomeComponent implements OnInit, OnDestroy {
   ];
 
   private businessValidationRequestId = 0;
+  private validationInFlight = false;
+  private queuedValidationPath: string | null = null;
   private hasScheduledBridgeRetry = false;
   private bridgeRetryAttempts = 0;
   private readonly maxBridgeRetryAttempts = 1;
@@ -130,9 +132,9 @@ export class WelcomeComponent implements OnInit, OnDestroy {
       event.mode === 'directory' &&
       typeof event.value === 'string' &&
       event.value.trim() &&
-      event.value !== this.workspacePath
+      this.normalizePath(event.value) !== this.workspacePath
     ) {
-      this.workspacePath = event.value;
+      this.workspacePath = this.normalizePath(event.value);
       this.clearPendingRetry();
       this.hasScheduledBridgeRetry = false;
       this.bridgeRetryAttempts = 0;
@@ -165,7 +167,7 @@ export class WelcomeComponent implements OnInit, OnDestroy {
   }
 
   onWorkspacePathChange(value: string | number | boolean): void {
-    const nextPath = `${value}`;
+    const nextPath = this.normalizePath(`${value}`);
     const changed = nextPath !== this.workspacePath;
 
     if (!changed) {
@@ -189,42 +191,59 @@ export class WelcomeComponent implements OnInit, OnDestroy {
   }
 
   private async validateWorkspacePathExists(path: string): Promise<void> {
+    const normalizedPath = this.normalizePath(path);
+
+    if (normalizedPath !== this.workspacePath) {
+      this.workspacePath = normalizedPath;
+    }
+
+    if (this.validationInFlight) {
+      this.queuedValidationPath = normalizedPath;
+      this.logs.info('welcome', 'workspaceBusinessValidationQueued', {
+        path: normalizedPath,
+      });
+      return;
+    }
+
+    this.validationInFlight = true;
     const requestId = ++this.businessValidationRequestId;
     this.logs.info('welcome', 'workspaceBusinessValidationStarted', {
       requestId,
-      path,
+      path: normalizedPath,
     });
 
-    if (!path.trim()) {
+    if (!normalizedPath.trim()) {
       this.workspacePathExists = false;
       this.workspacePathBusinessError = 'La ruta es obligatoria.';
       this.logs.warn('welcome', 'workspacePathEmpty');
+      this.finishValidationCycle(requestId);
       return;
     }
 
     if (!this.extensionBridge.hasHost()) {
-      this.workspacePathExists = false;
-      this.workspacePathBusinessError =
-        'No hay bridge con VSCode disponible todavía.';
+      this.workspacePathExists = null;
+      this.workspacePathBusinessError = '';
       this.logs.warn('welcome', 'bridgeUnavailable', {
         requestId,
         hasScheduledBridgeRetry: this.hasScheduledBridgeRetry,
         bridgeRetryAttempts: this.bridgeRetryAttempts,
         maxBridgeRetryAttempts: this.maxBridgeRetryAttempts,
+        path: normalizedPath,
       });
 
       if (!this.hasScheduledBridgeRetry && this.bridgeRetryAttempts < this.maxBridgeRetryAttempts) {
-        this.retryBusinessValidation(path, requestId);
+        this.retryBusinessValidation(normalizedPath, requestId);
       } else {
         this.logs.info('welcome', 'workspaceBusinessValidationRetrySkipped', {
           requestId,
-          path,
+          path: normalizedPath,
           reason: this.hasScheduledBridgeRetry
             ? 'retry-already-scheduled'
             : 'max-retries-reached',
         });
       }
 
+      this.finishValidationCycle(requestId);
       return;
     }
 
@@ -237,18 +256,19 @@ export class WelcomeComponent implements OnInit, OnDestroy {
       method: 'fs.pathExists',
       channel: this.extensionBridge.getChannel(),
       hasHost: this.extensionBridge.hasHost(),
-      path,
+      path: normalizedPath,
     });
 
     try {
       const result = await this.extensionBridge.request<{ exists: boolean; error?: string }, { path: string }>(
         'fs.pathExists',
-        { path },
+        { path: normalizedPath },
       );
       if (requestId !== this.businessValidationRequestId) {
         this.logs.info('welcome', 'workspaceBusinessValidationIgnoredOutdated', {
           requestId,
         });
+        this.finishValidationCycle(requestId);
         return;
       }
 
@@ -268,13 +288,14 @@ export class WelcomeComponent implements OnInit, OnDestroy {
         requestId,
         workspacePathExists: this.workspacePathExists,
         businessError: this.workspacePathBusinessError,
-        path,
+        path: normalizedPath,
       });
     } catch (error) {
       if (requestId !== this.businessValidationRequestId) {
         this.logs.info('welcome', 'workspaceBusinessValidationErrorIgnoredOutdated', {
           requestId,
         });
+        this.finishValidationCycle(requestId);
         return;
       }
 
@@ -290,8 +311,10 @@ export class WelcomeComponent implements OnInit, OnDestroy {
       });
       this.logs.error('welcome', 'workspacePathValidationFailed', {
         requestId,
-        path,
+        path: normalizedPath,
       });
+    } finally {
+      this.finishValidationCycle(requestId);
     }
   }
 
@@ -323,6 +346,58 @@ export class WelcomeComponent implements OnInit, OnDestroy {
 
       void this.validateWorkspacePathExists(path);
     }, 400);
+  }
+
+  private finishValidationCycle(requestId: number): void {
+    if (requestId !== this.businessValidationRequestId) {
+      return;
+    }
+
+    this.validationInFlight = false;
+
+    const queuedPath = this.queuedValidationPath;
+    this.queuedValidationPath = null;
+
+    if (queuedPath && queuedPath !== this.workspacePath) {
+      this.logs.info('welcome', 'workspaceBusinessValidationQueueDropped', {
+        queuedPath,
+        currentPath: this.workspacePath,
+      });
+      return;
+    }
+
+    if (queuedPath) {
+      this.logs.info('welcome', 'workspaceBusinessValidationQueueFlushed', {
+        queuedPath,
+      });
+      void this.validateWorkspacePathExists(queuedPath);
+    }
+  }
+
+  private normalizePath(rawPath: string): string {
+    const trimmed = rawPath.trim();
+    if (!trimmed) {
+      return '';
+    }
+
+    let normalized = trimmed.replace(/\\/g, '/');
+
+    if (/^[a-zA-Z]:$/.test(normalized)) {
+      return `${normalized}/`;
+    }
+
+    if (normalized.startsWith('//')) {
+      const body = normalized.slice(2).replace(/\/{2,}/g, '/');
+      normalized = `//${body}`;
+    } else {
+      normalized = normalized.replace(/\/{2,}/g, '/');
+    }
+
+    if (!/^[a-zA-Z]:\/$/.test(normalized)) {
+      normalized = normalized.replace(/\/+$/, '');
+    }
+
+    return normalized;
   }
 
   private clearPendingRetry(): void {
