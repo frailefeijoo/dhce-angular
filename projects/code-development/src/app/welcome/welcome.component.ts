@@ -27,6 +27,7 @@ export class WelcomeComponent implements OnInit, OnDestroy {
   workspacePath = 'C:/dev/projects/angular/dhce-angular/projects/code-development';
   workspacePathExists: boolean | null = false;
   workspacePathBusinessError = '';
+  private readonly requiredWorkspaceFiles = ['Pan.bat', 'Kitchen.bat'] as const;
   readonly steps = [
     'Paso 1: Explora el código',
     'Paso 2: Personaliza tu experiencia',
@@ -323,6 +324,23 @@ export class WelcomeComponent implements OnInit, OnDestroy {
         businessError: this.workspacePathBusinessError,
         path: normalizedPath,
       });
+
+      if (result.exists) {
+        const filesValidation = await this.validateWorkspaceRequiredFiles(normalizedPath, requestId);
+
+        if (requestId !== this.businessValidationRequestId) {
+          this.logs.info('welcome', 'workspaceRequiredFilesValidationIgnoredOutdated', {
+            requestId,
+          });
+          this.finishValidationCycle(requestId);
+          return;
+        }
+
+        if (!filesValidation.valid) {
+          this.workspacePathExists = false;
+          this.workspacePathBusinessError = filesValidation.errorMessage;
+        }
+      }
     } catch (error) {
       if (requestId !== this.businessValidationRequestId) {
         this.logs.info('welcome', 'workspaceBusinessValidationErrorIgnoredOutdated', {
@@ -349,6 +367,55 @@ export class WelcomeComponent implements OnInit, OnDestroy {
     } finally {
       this.finishValidationCycle(requestId);
     }
+  }
+
+  private async validateWorkspaceRequiredFiles(
+    directoryPath: string,
+    requestId: number,
+  ): Promise<{ valid: boolean; errorMessage: string }> {
+    const [firstFile, secondFile] = this.requiredWorkspaceFiles;
+
+    this.logs.info('welcome', 'workspaceRequiredFilesValidationStarted', {
+      requestId,
+      directoryPath,
+      files: this.requiredWorkspaceFiles,
+    });
+
+    const [firstResult, secondResult] = await Promise.all([
+      this.extensionBridge.fileExistsInDirectory(directoryPath, firstFile),
+      this.extensionBridge.fileExistsInDirectory(directoryPath, secondFile),
+    ]);
+
+    this.logs.info('welcome', 'workspaceRequiredFilesValidationBridgeResponse', {
+      requestId,
+      method: 'fs.fileExistsInDirectory',
+      directoryPath,
+      results: [
+        { file: firstFile, exists: firstResult.exists, error: firstResult.error ?? null },
+        { file: secondFile, exists: secondResult.exists, error: secondResult.error ?? null },
+      ],
+    });
+
+    const missingFiles: string[] = [];
+    if (!firstResult.exists) {
+      missingFiles.push(firstFile);
+    }
+    if (!secondResult.exists) {
+      missingFiles.push(secondFile);
+    }
+
+    if (missingFiles.length === 0) {
+      return {
+        valid: true,
+        errorMessage: '',
+      };
+    }
+
+    const fileLabel = missingFiles.length === 1 ? 'fichero requerido' : 'ficheros requeridos';
+    return {
+      valid: false,
+      errorMessage: `No se encontraron los ${fileLabel}: ${missingFiles.join(', ')}.`,
+    };
   }
 
   private retryBusinessValidation(path: string, requestId: number): void {

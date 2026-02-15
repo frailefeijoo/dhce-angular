@@ -49,3 +49,8 @@ export interface DhcePickDirectoryResult {
   cancelled?: boolean;
   error?: string;
 }
+
+export interface DhceFileExistsInDirectoryResult {
+  exists: boolean;
+  error?: string;
+}

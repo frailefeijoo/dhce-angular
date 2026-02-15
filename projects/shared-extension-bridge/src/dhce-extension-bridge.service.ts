@@ -2,6 +2,7 @@ import { Injectable, NgZone, inject } from '@angular/core';
 import {
   DhceBridgeConfig,
   DhceBridgeInboundMessage,
+  DhceFileExistsInDirectoryResult,
   DhcePickDirectoryResult,
   DhceBridgeRequest,
   DhcePathExistsResult,
@@ -185,6 +186,44 @@ export class DhceExtensionBridgeService {
         error: error instanceof Error ? error.message : 'Unknown host bridge error.',
       });
       return null;
+    }
+  }
+
+  async fileExistsInDirectory(
+    directoryPath: string,
+    filePath: string,
+  ): Promise<DhceFileExistsInDirectoryResult> {
+    if (typeof directoryPath !== 'string' || !directoryPath.trim()) {
+      return {
+        exists: false,
+        error: 'Directory path is invalid. Expected a non-empty string.',
+      };
+    }
+
+    if (typeof filePath !== 'string' || !filePath.trim()) {
+      return {
+        exists: false,
+        error: 'File path is invalid. Expected a non-empty string.',
+      };
+    }
+
+    const normalizedDirectoryPath = this.normalizeSystemPath(directoryPath);
+    const normalizedFilePath = filePath.trim().replace(/\\/g, '/').replace(/^\/+/, '');
+
+    try {
+      return await this.request<DhceFileExistsInDirectoryResult, { directoryPath: string; filePath: string }>(
+        'fs.fileExistsInDirectory',
+        {
+          directoryPath: normalizedDirectoryPath,
+          filePath: normalizedFilePath,
+        },
+        this.config.timeoutMs,
+      );
+    } catch (error) {
+      return {
+        exists: false,
+        error: error instanceof Error ? error.message : 'Unknown host bridge error.',
+      };
     }
   }
 
