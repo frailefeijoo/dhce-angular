@@ -1,0 +1,13 @@
+.layout {
+  display: grid;
+  gap: 16px;
+  padding: 16px;
+}
+
+pre {
+  margin: 0;
+  padding: 10px;
+  border-radius: 6px;
+  background: #f6f8fa;
+  overflow: auto;
+}

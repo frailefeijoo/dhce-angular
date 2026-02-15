@@ -3,40 +3,121 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "npm: start:dev-logs",
       "type": "npm",
-      "script": "start",
+      "script": "start:dev-logs",
       "isBackground": true,
       "problemMatcher": {
-        "owner": "typescript",
-        "pattern": "$tsc",
+        "owner": "custom",
+        "pattern": {
+          "regexp": "^(.*)$"
+        },
         "background": {
           "activeOnStart": true,
           "beginsPattern": {
             "regexp": "(.*?)"
           },
           "endsPattern": {
-            "regexp": "bundle generation complete"
+            "regexp": "DHCE dev log server listening"
           }
         }
       }
     },
     {
+      "label": "npm: start:code-development",
       "type": "npm",
-      "script": "test",
+      "script": "start:code-development",
       "isBackground": true,
       "problemMatcher": {
-        "owner": "typescript",
-        "pattern": "$tsc",
+        "owner": "custom",
+        "pattern": {
+          "regexp": "^(.*)$"
+        },
         "background": {
           "activeOnStart": true,
           "beginsPattern": {
             "regexp": "(.*?)"
           },
           "endsPattern": {
-            "regexp": "bundle generation complete"
+            "regexp": "Application bundle generation complete"
           }
         }
       }
+    },
+    {
+      "label": "shell: start:data-integration:4201",
+      "type": "shell",
+      "command": "npm",
+      "args": [
+        "run",
+        "start:data-integration",
+        "--",
+        "--port",
+        "4201"
+      ],
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "custom",
+        "pattern": {
+          "regexp": "^(.*)$"
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": {
+            "regexp": "(.*?)"
+          },
+          "endsPattern": {
+            "regexp": "Application bundle generation complete"
+          }
+        }
+      }
+    },
+    {
+      "label": "npm: start:code-development:with-logs",
+      "type": "npm",
+      "script": "start:code-development:with-logs",
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "custom",
+        "pattern": {
+          "regexp": "^(.*)$"
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": {
+            "regexp": "(.*?)"
+          },
+          "endsPattern": {
+            "regexp": "Application bundle generation complete"
+          }
+        }
+      }
+    },
+    {
+      "label": "Launch: code-development + logs",
+      "dependsOn": [
+        "npm: start:code-development:with-logs"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Launch: data-integration + logs",
+      "dependsOrder": "parallel",
+      "dependsOn": [
+        "npm: start:dev-logs",
+        "shell: start:data-integration:4201"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Launch: both apps + logs",
+      "dependsOrder": "parallel",
+      "dependsOn": [
+        "npm: start:dev-logs",
+        "npm: start:code-development",
+        "shell: start:data-integration:4201"
+      ],
+      "problemMatcher": []
     }
   ]
 }

@@ -3,18 +3,40 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "ng serve",
+      "name": "Code Development + logs",
       "type": "chrome",
       "request": "launch",
-      "preLaunchTask": "npm: start",
+      "preLaunchTask": "Launch: code-development + logs",
       "url": "http://localhost:4200/"
     },
     {
-      "name": "ng test",
+      "name": "Data Integration + logs",
       "type": "chrome",
       "request": "launch",
-      "preLaunchTask": "npm: test",
-      "url": "http://localhost:9876/debug.html"
+      "preLaunchTask": "Launch: data-integration + logs",
+      "url": "http://localhost:4201/"
+    },
+    {
+      "name": "Code Development (both apps task)",
+      "type": "chrome",
+      "request": "launch",
+      "preLaunchTask": "Launch: both apps + logs",
+      "url": "http://localhost:4200/"
+    },
+    {
+      "name": "Data Integration (browser)",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:4201/"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Both apps + logs",
+      "configurations": [
+        "Code Development (both apps task)",
+        "Data Integration (browser)"
+      ]
     }
   ]
 }

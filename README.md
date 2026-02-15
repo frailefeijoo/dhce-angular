@@ -22,6 +22,7 @@ Este repositorio (proyecto A) compila dos módulos web Angular independientes:
 
 - Código de `data-integration`: `projects/data-integration`
 - Código de `code-development`: `projects/code-development`
+- Módulo común Angular↔Extensión: `projects/shared-extension-bridge`
 - Distribución consumible por cliente: `modules/`
 
 Cada aplicación tiene su propio `index.html` con título del módulo:
@@ -83,3 +84,63 @@ panel.webview.html = html;
 	 - `modules/modules-manifest.json`
 3. Publicar commit de A.
 4. En B sincronizar `modules/` y cargar módulo desde Webview.
+
+## Bridge común Angular ↔ VSCode (lado A)
+
+Se creó un módulo dinámico reutilizable para todos los proyectos Angular del workspace:
+
+- `projects/shared-extension-bridge/src/dhce-extension-bridge.module.ts`
+- `projects/shared-extension-bridge/src/dhce-extension-bridge.service.ts`
+
+Integración en cada app standalone:
+
+- `importProvidersFrom(DhceExtensionBridgeModule.forRoot({ channel, timeoutMs }))`
+
+Método inicial implementado en el bridge:
+
+- `pathExists(path)` → envía request RPC `fs.pathExists` al host de la extensión.
+- `pickDirectory()` → envía request RPC `fs.pickDirectory` y espera ruta absoluta seleccionada por el host.
+
+### Contrato de mensajes
+
+- Request:
+	- `{ channel, message: { kind: 'request', requestId, method, payload } }`
+- Response:
+	- `{ channel, message: { kind: 'response', requestId, ok, result?, error? } }`
+
+## Prompt para integrar B (extensión VSCode)
+
+Usa este prompt en el agente del proyecto B:
+
+```text
+Implementa en la extensión VS Code un router genérico de mensajes Webview para integrar con el bridge Angular del proyecto A.
+
+Objetivo:
+- Soportar mensajes RPC con contrato:
+	- Request (desde Webview): { channel: 'dhce-extension-bridge', message: { kind: 'request', requestId, method, payload } }
+	- Response (hacia Webview): { channel: 'dhce-extension-bridge', message: { kind: 'response', requestId, ok, result?, error? } }
+
+Requisitos:
+1) Mantener el comando existente que abre el Webview (no crear uno nuevo salvo que no exista).
+2) En panel.webview.onDidReceiveMessage(...), filtrar por channel 'dhce-extension-bridge'.
+3) Implementar router por method con whitelist.
+4) Implementar método 'fs.pathExists':
+	 - payload: { path: string }
+	 - validar path no vacío
+	 - comprobar existencia real en SO con fs.promises.access/stat
+	 - responder { exists: boolean, error?: string }
+5) Implementar método 'fs.pickDirectory':
+	 - payload: {}
+	 - abrir selector de carpetas de VS Code
+	 - responder { path: string, cancelled: boolean }
+	 - cuando path exista, debe ser ruta absoluta del SO
+6) Manejar errores sin romper el panel: siempre responder ok:false + error en excepciones.
+7) Preservar correlación por requestId.
+8) Dejar el código preparado para futuros métodos (estructura extensible).
+
+Entregables:
+- Patch de archivos modificados en la extensión.
+- Ejemplo de request/response real para fs.pathExists.
+- Ejemplo de request/response real para fs.pickDirectory.
+- Pasos de prueba manual desde webview.
+```

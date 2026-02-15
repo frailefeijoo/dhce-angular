@@ -1,0 +1,35 @@
+<mat-toolbar color="primary">DHCE Angular Material UI Catalog</mat-toolbar>
+
+<main class="layout">
+  <mat-card>
+    <mat-card-title>Resumen</mat-card-title>
+    <p>
+      Este módulo compartido se sirve en <strong>data-integration</strong> y <strong>code-development</strong>.
+      Incluye el catálogo de componentes Material con ejemplo de uso por cada elemento.
+    </p>
+  </mat-card>
+
+  <mat-card>
+    <mat-card-title>Componentes Material (categorías)</mat-card-title>
+    <mat-list>
+      @for (category of categories; track category.name) {
+        <mat-list-item>{{ category.name }} · {{ category.type }} · {{ category.selector }}</mat-list-item>
+      }
+    </mat-list>
+  </mat-card>
+
+  <mat-card>
+    <mat-card-title>Ejemplo de uso por componente</mat-card-title>
+    <mat-accordion>
+      @for (category of categories; track category.name) {
+        <mat-expansion-panel>
+          <mat-expansion-panel-header>
+            <mat-panel-title>{{ category.name }}</mat-panel-title>
+            <mat-panel-description>{{ category.selector }}</mat-panel-description>
+          </mat-expansion-panel-header>
+          <pre>{{ category.example }}</pre>
+        </mat-expansion-panel>
+      }
+    </mat-accordion>
+  </mat-card>
+</main>

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-02-14T17:25:10.835Z",
+  "generatedAt": "2026-02-15T14:33:45.417Z",
   "modules": [
     {
       "name": "code-development",
@@ -8,11 +8,13 @@
       "browserPath": "code-development/browser",
       "files": {
         "js": [
-          "main-YVBPJYIQ.js",
+          "chunk-QMK3QNP7.js",
+          "chunk-WMA6ZS3S.js",
+          "main-K3RXR6SI.js",
           "polyfills-5CFQRCPP.js"
         ],
         "css": [
-          "styles-5INURTSO.css"
+          "styles-Z5UYKNDX.css"
         ]
       }
     },
@@ -22,11 +24,13 @@
       "browserPath": "data-integration/browser",
       "files": {
         "js": [
-          "main-7A7ZVHH7.js",
+          "chunk-LEHMRPA4.js",
+          "chunk-LV2NJSWB.js",
+          "main-G77RTI4T.js",
           "polyfills-5CFQRCPP.js"
         ],
         "css": [
-          "styles-5INURTSO.css"
+          "styles-Z5UYKNDX.css"
         ]
       }
     }

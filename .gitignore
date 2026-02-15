@@ -40,6 +40,7 @@ pnpm-debug.log*
 /libpeerconnection.log
 testem.log
 /typings
+/projects/*/logs/*.log
 
 # System files
 .DS_Store

@@ -1,0 +1,41 @@
+<dhce-mat-card-component title="Welcome">
+  <p>Primer acceso detectado (visita #{{ accessCount }}).</p>
+  <p>Completa este tutorial inicial.</p>
+</dhce-mat-card-component>
+
+<dhce-mat-stepper-component
+  [linear]="true"
+  (stepChange)="onStepChange($event)"
+  (finish)="markAsCompleted()"
+>
+  <dhce-mat-step-item label="Paso 1: Explora el código">
+    <p>Revisa la estructura del proyecto y los archivos principales.</p>
+    <p>Empieza por la carpeta <strong>projects/code-development</strong>.</p>
+    <dhce-mat-input
+      type="directory"
+      label="Ruta base del proyecto"
+      hint="Debe ser una ruta absoluta del sistema operativo."
+      [readonly]="true"
+      [pickerResolver]="workspacePickerResolverOrUndefined"
+      [required]="true"
+      [validate]="true"
+      [businessValid]="workspacePathExists"
+      [businessError]="workspacePathBusinessError"
+      [default]="workspacePath"
+      (valueChange)="onWorkspacePathChange($event)"
+      (validChange)="onWorkspaceUiValidChange($event)"
+      (pickerTrace)="onWorkspacePickerTrace($event)"
+      (validationTrace)="onWorkspaceUiValidationTrace($event)"
+    ></dhce-mat-input>
+  </dhce-mat-step-item>
+
+  <dhce-mat-step-item label="Paso 2: Personaliza tu experiencia">
+    <p>Ajusta la configuración y preferencias para adaptarlo a tus necesidades.</p>
+    <p>Puedes modificar variables, rutas y estilo de componentes.</p>
+  </dhce-mat-step-item>
+
+  <dhce-mat-step-item label="Paso 3: Comienza a trabajar">
+    <p>Accede al dashboard y comienza a desarrollar tu proyecto.</p>
+    <p>Usa el botón de finalizar para marcar el onboarding como completo.</p>
+  </dhce-mat-step-item>
+</dhce-mat-stepper-component>
